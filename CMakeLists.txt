@@ -6,6 +6,8 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(PCL REQUIRED)
 find_package(PkgConfig)
+find_package(Boost 1.58 REQUIRED COMPONENTS program_options)
+
 pkg_check_modules(YamlCpp yaml-cpp)
 
 ###########
@@ -35,10 +37,28 @@ target_link_libraries(playclouds
   yaml-cpp
 )
 
+## assignment
+# add_executable(assignment
+#   src/assignment.cpp
+# )
+# target_link_libraries(assignment
+#   ${Boost_LIBRARIES}
+# )
+
 add_executable(standalone
   src/standalone.cpp
 )
-target_link_libraries(standalone
+
+add_executable(cbs_group_constraint
+  src/cbs_group_constraint.cpp
+)
+
+target_link_libraries(cbs_group_constraint
+  ${Boost_LIBRARIES}
+)
+
+target_link_libraries(
+  standalone
   librigidbodytracker
   ${PCL_LIBRARIES}
 )

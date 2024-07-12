@@ -20,6 +20,7 @@ static pcl::PointXYZ eig2pcl(Eigen::Vector3f v)
   return pcl::PointXYZ(v.x(), v.y(), v.z());
 }
 
+
 Eigen::Vector3f asVec(YAML::Node const &node)
 {
   assert(node.IsSequence());
@@ -72,7 +73,7 @@ static void readConfig(
   std::map<std::string, size_t> marker_name_to_index;
   i = 0;
   markerConfigurations.clear();
-  for (auto &&config : markerRoot) {
+  for (auto &&config : markerRoot) {    
     auto val = config.second; // first is key
     assert(val.IsMap());
     auto offset = asVec(val["offset"]);
@@ -99,7 +100,7 @@ static void readConfig(
     rigidBodies.emplace_back(
       marker_name_to_index.at(val["marker"].as<std::string>()),
       dynamics_name_to_index.at(val["dynamics"].as<std::string>()),
-      xf,
+      xf,     // Eigen::Affine3f xf(Eigen::Translation3f(asVec(initPos)));
       rb.first.as<std::string>());
   }
 }

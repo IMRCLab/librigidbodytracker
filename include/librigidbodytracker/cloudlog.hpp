@@ -8,6 +8,8 @@
 #include <cstdio>
 #include <fstream>
 #include <type_traits>
+#include <random>
+
 
 #include <pcl/common/transforms.h>
 #include <pcl/registration/icp.h>
@@ -81,6 +83,7 @@ namespace librigidbodytracker {
 			if (!s) {
 				throw std::runtime_error("PointCloudPlayer: bad file path.");
 			}
+			inputPath = path;
 			while (s) {
 				uint32_t millis = read<uint32_t>(s);
 				// TODO cleaner loop?
@@ -103,14 +106,45 @@ namespace librigidbodytracker {
 
 		void play(librigidbodytracker::RigidBodyTracker &tracker) const
 		{
+			std::string inputfileName = inputPath.substr(inputPath.find_last_of("/\\") + 1);
+			std::string outputDir = "./data/output/";
+			auto now = std::chrono::system_clock::now();
+			auto epoch = now.time_since_epoch();
+			auto minutes = std::chrono::duration_cast<std::chrono::minutes>(epoch).count();
+			std::string outputFile = outputDir + inputfileName+"_" + std::to_string(minutes) + "_pointcloud";  
+			outputFile = outputFile + ".txt";
+			std::ofstream out(outputFile, std::ios::out); 
+			if (!out.is_open()) {
+				std::cout << "File does not exist, creating a new file..." << std::endl;
+				out.open(outputFile);
+			}
+
 			for (size_t i = 0; i < clouds.size(); ++i) {
-				std::cout << "\n  " << i << "  ------------------------------\n";
+				std::cout << i << " frame  ---------------------------------------------------"<< std::endl;
 				auto dur = std::chrono::milliseconds(timestamps[i]);
 				std::chrono::high_resolution_clock::time_point stamp(dur);
-				tracker.update(stamp, clouds[i]);
+				if (clouds[i]->empty()) {
+					continue;
+				}
+
+				std::ofstream out(outputFile, std::ios_base::app); 
+				out << "stamp: " << stamp.time_since_epoch().count() << std::endl;
+				const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud = clouds[i];
+				for (size_t i = 0; i < cloud->size(); ++i) {
+					const pcl::PointXYZ& point = (*cloud)[i]; 
+					out << point.x << ", " << point.y << ", " << point.z << std::endl;
+				}
+				tracker.update(stamp, clouds[i], inputPath);
+
+				// tracker.update(stamp, clouds[i]);
 			}
+			std::cout << "Total clouds size: " << clouds.size() << std::endl;
+			std::cout << "outputFile: " << outputFile <<std::endl;
 		}
 
+
+	private:
+		std::string inputPath;
 	protected:
 		template <typename T>
 		T read(std::ifstream &s)

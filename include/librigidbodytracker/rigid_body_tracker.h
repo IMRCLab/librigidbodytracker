@@ -5,8 +5,15 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <set>
 
 namespace librigidbodytracker {
+
+  enum TrackingMode {
+    PositionMode,
+    PoseMode,
+    HybridMode
+  };
 
   struct DynamicsConfiguration
   {
@@ -79,7 +86,7 @@ namespace librigidbodytracker {
 
     // for faster-than-real-time file playback
     void update(std::chrono::high_resolution_clock::time_point stamp,
-      pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud);
+      pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud,std::string inputPath = "");
 
     const std::vector<RigidBody>& rigidBodies() const;
 
@@ -101,6 +108,12 @@ namespace librigidbodytracker {
     bool initializePosition(std::chrono::high_resolution_clock::time_point stamp,
       pcl::PointCloud<pcl::PointXYZ>::ConstPtr markers);
 
+    bool initializeHybrid(std::chrono::high_resolution_clock::time_point stamp,
+      pcl::PointCloud<pcl::PointXYZ>::ConstPtr markers);
+
+    void updateHybrid(std::chrono::high_resolution_clock::time_point stamp,
+      const pcl::PointCloud<pcl::PointXYZ>::ConstPtr markers); 
+
     void logWarn(const std::string& msg);
 
   private:
@@ -110,8 +123,10 @@ namespace librigidbodytracker {
     bool m_initialized;
     int m_init_attempts;
     bool m_trackPositionOnly;
-
+    TrackingMode m_trackingMode;
     std::function<void(const std::string&)> m_logWarn;
+    std::string m_inputPath;
+
   };
 
 } // namespace librigidbodytracker

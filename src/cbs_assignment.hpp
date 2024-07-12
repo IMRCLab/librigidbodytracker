@@ -8,13 +8,13 @@
 namespace libMultiRobotPlanning {
 
 /*!
-  \example assignment.cpp example that takes cost mappings from a file
+  \example cbs_group_constraint.cpp example that takes cost mappings from a file
 */
 
 /*! \brief Find optimal (lowest total cost) assignment
 
 This class can find the lowest sum-of-cost assignment
-for given agents and tasks. The costs must be integers, the agents and
+for given agents and groups of tasks. The costs must be integers, the agents and
 tasks can be of any user-specified type.
 
 This method is based on maximum flow formulation.
@@ -23,9 +23,9 @@ This method is based on maximum flow formulation.
 \tparam Task Type of task. Needs to be copy'able and comparable
 */
 template <typename Agent, typename Task>
-class Assignment {
+class CBS_Assignment {
  public:
-  Assignment()
+  CBS_Assignment()
       : m_agents(), m_tasks(), m_graph(), m_sourceVertex(), m_sinkVertex() {
     m_sourceVertex = boost::add_vertex(m_graph);
     m_sinkVertex = boost::add_vertex(m_graph);
@@ -34,7 +34,7 @@ class Assignment {
   void clear() {
     // std::cout << "Asg: clear" << std::endl;
     std::set<edge_t> edgesToRemove;
-    for (const auto& agent : m_agents) {
+    for (const auto& agent : m_agents) {  
       auto es = boost::out_edges(agent.right, m_graph);
       for (auto eit = es.first; eit != es.second; ++eit) {
         if (!m_graph[*eit].isReverseEdge) {
@@ -44,14 +44,18 @@ class Assignment {
       }
     }
 
-    for (const auto& e : edgesToRemove) {
+    for (const auto& e : edgesToRemove) {  
       boost::remove_edge(e, m_graph);
     }
   }
 
-  void setCost(const Agent& agent, const Task& task, long cost) {
-    // std::cout << "setCost: " << agent << "->" << task << " cost: " << cost <<
-    // std::endl;
+  void setCost(const Agent& agent, const std::set<Task>& group, long cost) {
+    // std::cout << "setCost: " << agent << "->" << "group";
+    // for (auto task : group) {
+    // std::cout << task << " ";
+    // }
+    // std::cout <<" cost: " << cost << std::endl; 
+
     // Lazily create vertex for agent
     auto agentIter = m_agents.left.find(agent);
     vertex_t agentVertex;
@@ -63,22 +67,24 @@ class Assignment {
       agentVertex = agentIter->second;
     }
 
-    // Lazily create vertex for task
-    auto taskIter = m_tasks.left.find(task);
-    vertex_t taskVertex;
-    if (taskIter == m_tasks.left.end()) {
-      taskVertex = boost::add_vertex(m_graph);
-      addOrUpdateEdge(taskVertex, m_sinkVertex, 0);
-      m_tasks.insert(tasksMapEntry_t(task, taskVertex));
-    } else {
-      taskVertex = taskIter->second;
+    // Lazily create vertex for group
+    auto groupIter = m_groups.find(group);
+    vertex_t groupVertex;
+    if (groupIter == m_groups.end()) {
+      groupVertex = boost::add_vertex(m_graph);
+      // std::cout << "Group size: " << group.size() << std::endl;
+      // addOrUpdateEdge(agentVertex, groupVertex, cost,group.size());
+      m_groups.insert(groupsMapEntry_t(group, groupVertex));
+    }else {
+      groupVertex = groupIter->second;
     }
+    addOrUpdateEdge(agentVertex, groupVertex, cost);
+    addOrUpdateEdge(groupVertex, m_sinkVertex, 0);
 
-    addOrUpdateEdge(agentVertex, taskVertex, cost);
   }
 
   // find first (optimal) solution with minimal cost
-  long solve(std::map<Agent, Task>& solution) {
+  long solve(std::map<Agent,std::set<Task>>&  solution) {
     using namespace boost;
 
     successive_shortest_path_nonnegative_weights(
@@ -103,11 +109,23 @@ class Assignment {
       auto es2 = out_edges(agentVertex, m_graph);
       for (auto eit2 = es2.first; eit2 != es2.second; ++eit2) {
         if (!m_graph[*eit2].isReverseEdge) {
-          vertex_t taskVertex = target(*eit2, m_graph);
+          vertex_t groupVertex = target(*eit2, m_graph);
           if (m_graph[*eit2].residualCapacity == 0) {
-            solution[m_agents.right.at(agentVertex)] =
-                m_tasks.right.at(taskVertex);
-            cost += m_graph[edge(agentVertex, taskVertex, m_graph).first].cost;
+
+              for (auto itr = m_groups.begin(); itr != m_groups.end(); ++itr) {
+                if (itr->second == groupVertex) {
+                    std::set<Task> correspondingGroup = itr->first;
+                    solution[m_agents.right.at(agentVertex)] =
+                        correspondingGroup;    
+                    // for (const auto& element : itr->first) {
+                    //     std::cout << element << " ";
+                    // }                
+                    // std::cout << std::endl;
+                    // std::cout << "Key found: " << itr->first << std::endl;
+                    break;
+                }
+            }
+            cost += m_graph[edge(agentVertex, groupVertex, m_graph).first].cost;
             break;
           }
         }
@@ -178,6 +196,11 @@ class Assignment {
 
   agentsMap_t m_agents;
   tasksMap_t m_tasks;
+
+  typedef std::map<std::set<Task>, vertex_t> groupsMap_t;
+  typedef typename groupsMap_t::value_type groupsMapEntry_t;
+  groupsMap_t m_groups;
+
 
   graph_t m_graph;
   vertex_t m_sourceVertex;
