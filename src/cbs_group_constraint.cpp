@@ -39,26 +39,24 @@ int main(int argc, char* argv[]) {
   std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
   std::set<CBS_InputData> inputData;
-  // std::vector<InputData> inputData;
   processInputFile(inputFile, inputData);
 
   // std::cout << "-----low level search: loading data, set cost;solve assignment;put solution into a HighLevelNode------" << std::endl;
   CBS_Assignment<std::string, std::string> CBS_assignment;
   for (const auto& data : inputData) {
+    // std::cout << data ;    
     CBS_assignment.setCost(data.agent, data.taskSet, data.cost);
   }
+  // auto groups = CBS_assignment.getGroups();
   std::map<std::string, std::set<std::string>> solution;
-  int64_t cost = CBS_assignment.solve(solution);
+  int64_t CBS_assignment_cost = CBS_assignment.solve(solution);
   HighLevelNode start;
   start.id = 0;
-  start.cost = cost;
+  start.cost = CBS_assignment_cost;
   start.solution = solution;
-  std::cout << "The start HLN: ";
-  std::cout << start;
   typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                     boost::heap::mutable_<true> >
       open;
-
   auto handle = open.push(start);
   (*handle).handle = handle;
 
@@ -80,7 +78,6 @@ int main(int argc, char* argv[]) {
     if (P.cost == last_cost && P.solution.size() == last_solution.size()){  
       duplicate ++;
     }
-
     last_cost = P.cost;
     last_solution = P.solution;
 
@@ -90,27 +87,15 @@ int main(int argc, char* argv[]) {
 
     std::string conflict_task;
     if (!getFirstConflict(P.solution,conflict_task)) {
-      // std::cout << "done; cost: " << P.cost << std::endl;
-      // solution = P.solution;
-      // return true;
       std::cout << "no conflict_task, Breaking out of the loop.\n";
       outputToFile = true; 
       break;
     }
 
-    std::cout << P;
-    // std::cout << "need to find the new solution"<< std::endl;
+    // std::cout << P;
 
-    
-    // std::cout << "conflict_task: " << conflict_task << std::endl;  
-    // std::vector<Constraint> new_constraints;  // need to be set of constraints 
     std::set<std::set<Constraint>> new_constraints;
     createConstraintsFromConflict(P.solution,conflict_task,new_constraints);
-    // std::cout << "new constraints: " << std::endl;
-    // for (const auto& constraint : new_constraints) {
-    //   std::cout << constraint;
-    // }
-
     for (const auto& new_constraint_set : new_constraints) {
       HighLevelNode newNode;
       LowLevelSearch(new_constraint_set,inputData,P,newNode,id);
