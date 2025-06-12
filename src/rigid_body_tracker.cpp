@@ -221,7 +221,7 @@ bool RigidBodyTracker::initializePose(Cloud::ConstPtr markersConst)
 
     // try ICP with guesses of many different yaws about knn centroid
     Cloud result;
-    static int const N_YAW = 20;
+    static int const N_YAW = 1;
     double bestErr = std::numeric_limits<double>::max();
     Eigen::Affine3f bestTransformation;
     for (int i = 0; i < N_YAW; ++i) {
@@ -657,7 +657,7 @@ bool RigidBodyTracker::initializeHybrid(
 
     // try ICP with guesses of many different yaws about knn centroid
     Cloud result;
-    static int const N_YAW = 20;
+    static int const N_YAW = 1;
     double bestErr = std::numeric_limits<double>::max();
     Eigen::Affine3f bestTransformation;
     for (int i = 0; i < N_YAW; ++i) {
