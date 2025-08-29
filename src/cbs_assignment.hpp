@@ -72,8 +72,6 @@ class CBS_Assignment {
     vertex_t groupVertex;
     if (groupIter == m_groups.end()) {
       groupVertex = boost::add_vertex(m_graph);
-      // std::cout << "Group size: " << group.size() << std::endl;
-      // addOrUpdateEdge(agentVertex, groupVertex, cost,group.size());
       m_groups.insert(groupsMapEntry_t(group, groupVertex));
     }else {
       groupVertex = groupIter->second;
@@ -135,6 +133,20 @@ class CBS_Assignment {
     return cost;
   }
 
+  // Function to get all groups
+  std::vector<std::set<Task>> getGroups() const {
+    std::vector<std::set<Task>> groups;
+    for (const auto& groupEntry : m_groups) {
+      groups.push_back(groupEntry.first);
+      std::cout << "Group: ";
+      for (const auto& task : groupEntry.first) {
+        std::cout << task << " ";
+      }
+      std::cout << std::endl;
+    }
+    return groups;
+  }
+
  protected:
   typedef boost::adjacency_list_traits<boost::vecS, boost::vecS,
                                        boost::bidirectionalS>
@@ -172,8 +184,12 @@ class CBS_Assignment {
     auto e = boost::edge(from, to, m_graph);
     if (e.second) {
       // found edge -> update cost
-      m_graph[e.first].cost = cost;
-      m_graph[m_graph[e.first].reverseEdge].cost = -cost;
+      // std::cout << "Before update: cost = " << m_graph[e.first].cost << std::endl;
+      if (cost < m_graph[e.first].cost) {
+        m_graph[e.first].cost = cost; // ?? TODO only when the cost is smaller
+        m_graph[m_graph[e.first].reverseEdge].cost = -cost;
+      }
+      // std::cout << "After update: cost = " << m_graph[e.first].cost << std::endl;
     } else {
       // no edge in graph yet
       auto e1 = boost::add_edge(from, to, m_graph);

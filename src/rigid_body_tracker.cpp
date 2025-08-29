@@ -946,7 +946,7 @@ void RigidBodyTracker::updateHybrid(std::chrono::high_resolution_clock::time_poi
   HighLevelNode P;
   int m_highLevelExpanded = 0; 
   int m_lowLevelExpanded = 0;
-  int duplicate = 0;
+  // int duplicate = 0;
   while (!open.empty()) {
     m_highLevelExpanded++;
     P = open.top();
