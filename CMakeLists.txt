@@ -62,3 +62,6 @@ target_link_libraries(
   librigidbodytracker
   ${PCL_LIBRARIES}
 )
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})

@@ -1,0 +1,47 @@
+marker_configurations:
+  four_marker:
+    offset: [0.0,0.0,-0.01]
+    points:
+      p0: [0.03, 0.0, 0.0]  # front 
+      p1: [0.0, -0.025, 0.0]  # right
+      p2: [-0.01, 0.0, 0.0] # back
+      p3: [0.0, 0.03, 0.0]  # left
+  three_marker:
+    offset: [0.0,0.0,-0.01]
+    points:
+      p0: [0.01, 0.0, 0.0] # front
+      p1: [0.0, -0.025, 0.0] # right
+      p2: [-0.03, 0.0, 0.0] # back
+  default_single_marker:
+    offset: [0.0, -0.01, -0.05]
+    points:
+      p0: [0.0177184,0.0139654,0.0457585]
+dynamics_configurations:
+  default:
+    # max_velocity: [2, 2, 3] # m/s
+    # max_angular_velocity: [20, 20, 10] # rad/s
+    # max_roll: 1.4 #rad
+    # max_pitch: 1.4 #rad 
+    max_fitness_score: 0.001  # ok
+    max_velocity: [20, 20, 30] # m/s
+    max_angular_velocity: [40, 40, 20] # rad/s
+    max_roll: 2 #rad
+    max_pitch: 2 #rad   
+
+rigid_bodies:
+  four_marker_drone:
+    initial_position: [0.5, -0.5, 0.0]
+    marker: "four_marker"
+    dynamics: "default"
+  three_marker_drone:
+    initial_position: [0, -0.5, 0.0]
+    marker: "three_marker"
+    dynamics: "default"
+  one_marker_drone:
+    initial_position: [0.0,0.0,0.0]
+    marker: "default_single_marker"
+    dynamics: "default"
+  one_marker_drone2:
+    initial_position: [0.5,0.0,0.0]
+    marker: "default_single_marker"
+    dynamics: "default"
